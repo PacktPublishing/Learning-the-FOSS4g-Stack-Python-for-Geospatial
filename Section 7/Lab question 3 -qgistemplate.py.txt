@@ -1,0 +1,33 @@
+## Import packages
+import qgis
+
+## Bring in data
+floodzones = iface.addVectorLayer('c:/training/python/shapefiles/Floodzones.shp', "", "ogr")
+parcels = iface.addVectorLayer('c:/training/python/tompkins.gdb|layername=parcels', "parcels", "ogr")
+firestations = iface.addVectorLayer('c:/training/python/shapefiles/FireStations.shp', "firestations", "ogr")
+
+## Select by attributes
+selectedfz = processing.run("native:extractbyexpression", {'INPUT':'floodz', 'EXPRESSION':'ZONE = \'AE\'','OUTPUT':'memory:'})
+selectedfz = processing.runAndLoadResults("native:extractbyexpression", {'INPUT':'floodz', 'EXPRESSION':'ZONE = \'AE\'','OUTPUT':'memory:'})
+
+## Select by location
+selpar = processing.runAndLoadResults("native:extractbylocation",{'INPUT':'parcels','PREDICATE':[0],'INTERSECT':"Matching features",'OUTPUT':'memory:'})['OUTPUT']
+
+## Perform other GIS functions
+firebuf = processing.runAndLoadResults("native:buffer", {'INPUT':firestations,'DISTANCE':100,'OUTPUT':'memory:'})
+firesp = processing.runAndLoadResults('qgis:reprojectlayer',{'INPUT': firestations, 'TARGET_CRS': 'EPSG:32618', 'OUTPUT': 'memory:firereproj'})
+firebuf = processing.runAndLoadResults("native:buffer", {'INPUT':'Reprojected','DISTANCE':400,'OUTPUT':'memory:'})
+
+## Iterating over values
+sp = QgsProject.instance().mapLayersByName('Extracted (location)')[0]
+selected_features = sp.selectAll()
+    
+myidx = features.fields().indexFromName('asmt')
+myarray = []
+for i in features:	
+	myarray.append(i[19])
+	
+print(numpy.sum(myarray))
+
+
+selectedfz.featureCount()

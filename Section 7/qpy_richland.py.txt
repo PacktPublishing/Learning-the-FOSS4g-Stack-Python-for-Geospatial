@@ -1,0 +1,46 @@
+import qgis
+tri = iface.addVectorLayer(r'K:\GEOG\GEOG419\RichlandData\Facilities.gdb|layername=tri92', "tri92", "ogr")
+schools = iface.addVectorLayer(r'K:\GEOG\GEOG419\RichlandData\Facilities.gdb|layername=schools', "schools", "ogr")
+interstates = iface.addVectorLayer(r'K:\GEOG\GEOG419\RichlandData\Base.gdb|layername=istates', "interstates", "ogr")
+istatebuf = processing.runAndLoadResults("native:buffer",{'INPUT': 'interstates istates','DISTANCE':804, 'OUTPUT':'memory:'})['OUTPUT']
+seltri = processing.run("native:extractbylocation",{'INPUT':tri,'PREDICATE':[0],'INTERSECT':istatebuf,'OUTPUT':'memory:seltri92'})['OUTPUT']
+namefield = tri.fields().indexFromName('NAME')
+
+for f in seltri.getFeatures():
+    print(f[namefield])
+
+#########################################
+    
+import qgis
+tri = iface.addVectorLayer(r'c:\temp\RichlandData\Facilities.gdb|layername=tri92', "tri92", "ogr")
+schools = iface.addVectorLayer(r'c:\temp\RichlandData\Facilities.gdb|layername=schools', "schools", "ogr")
+lc =  processing.runAndLoadResults("native:extractbyexpression", {'INPUT':tri, 'EXPRESSION':'NAME = \'LINDAU CHEMICAL\'','OUTPUT':'memory:'})['OUTPUT']
+tribuf = processing.run("native:buffer", {'INPUT':lc,'DISTANCE':804,'OUTPUT':'memory:'})['OUTPUT']
+
+selschool = processing.run("native:extractbylocation",{'INPUT':schools,'PREDICATE':[0],'INTERSECT':tribuf,'OUTPUT':'memory:seltri92'})['OUTPUT']
+namefield = schools.fields().indexFromName('NAME')
+
+for f in selschool.getFeatures():
+    print(f[namefield])
+
+
+####################################################
+
+import qgis
+tri = iface.addVectorLayer(r'c:\temp\RichlandData\Facilities.gdb|layername=tri92', "tri92", "ogr")
+bk79 = iface.addVectorLayer(r'c:\temp\RichlandData\Census.gdb|layername=bk79', "bk79", "ogr")
+databk79 = iface.addVectorLayer(r'c:\temp\\RichlandData\Census.gdb|layername=databk79', "databk79", "ogr")
+
+schools = iface.addVectorLayer(r'c:\temp\\RichlandData\Facilities.gdb|layername=schools', "schools", "ogr")
+interstates = iface.addVectorLayer(r'c:\temp\\RichlandData\Base.gdb|layername=istates', "interstates", "ogr")
+tribuf = processing.runAndLoadResults("native:buffer",{'INPUT': tri,'DISTANCE':804, 'OUTPUT':'memory:'})['OUTPUT']
+fixgeom = processing.runAndLoadResults('native:fixgeometries',{'INPUT':bk79,'OUTPUT':'memory:bk79'})['OUTPUT']
+joinedtable = processing.run("native:joinattributestable",{'INPUT': fixgeom,'FIELD':'TRBK','INPUT_2':'databk79','FIELD_2':'TRBK', 'OUTPUT':'memory:'})['OUTPUT']
+bk79sel = processing.run("native:extractbylocation",{'INPUT':joinedtable,'PREDICATE':[0],'INTERSECT':tribuf,'OUTPUT':'memory:bk79'})['OUTPUT']
+
+namefield = joinedtable.fields().indexFromName('population')
+
+for f in bk79sel.getFeatures():
+    if str(f[namefield]) != 'NULL':
+        i = i + int(f[namefield])
+print(i)
